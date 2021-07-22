@@ -6,7 +6,7 @@ This is a fork of `cordova-plugin-file-transfer` by [Moodle HQ](https://moodle.c
 
 We created this fork for [our mobile application](https://github.com/moodlehq/moodleapp) because there are some commits in the development branch that haven't been released. So this package doesn't have any extra modifications (other than name and version).
 
-You can see all the changes here: [1.7.1...moodlemobile:1.7.1-moodle.2](https://github.com/apache/cordova-plugin-file-transfer/compare/1.7.1...moodlemobile:v1.7.1-moodle.2)
+You can see all the changes here: [1.7.1...moodlemobile:v1.7.1-moodle.2](https://github.com/apache/cordova-plugin-file-transfer/compare/1.7.1...moodlemobile:v1.7.1-moodle.2)
 
 ## Installation
 
