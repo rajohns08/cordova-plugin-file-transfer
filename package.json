@@ -1,10 +1,10 @@
 {
-  "name": "cordova-plugin-file-transfer",
-  "version": "2.0.0-dev",
-  "description": "Cordova File Transfer Plugin",
+  "name": "@moodlehq/cordova-plugin-file-transfer",
+  "version": "1.7.1-moodle.1",
+  "description": "Moodle's fork of Cordova File Transfer Plugin",
   "types": "./types/index.d.ts",
   "cordova": {
-    "id": "cordova-plugin-file-transfer",
+    "id": "@moodlehq/cordova-plugin-file-transfer",
     "platforms": [
       "android",
       "ios",
@@ -16,8 +16,8 @@
     "test": "npm run lint",
     "lint": "eslint ."
   },
-  "repository": "github:apache/cordova-plugin-file-transfer",
-  "bugs": "https://github.com/apache/cordova-plugin-file-transfer/issues",
+  "repository": "github:moodlemobile/cordova-plugin-file-transfer",
+  "bugs": "https://github.com/moodlemobile/cordova-plugin-file-transfer/issues",
   "keywords": [
     "cordova",
     "file",
