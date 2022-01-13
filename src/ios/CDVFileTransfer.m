@@ -43,7 +43,7 @@
 - (void)fileDataForUploadCommand:(CDVInvokedUrlCommand*)command;
 @end
 
-// Buffer size to use for streaming uploads.
+// Buffer size to use for streaming uploads.Testing.
 static const NSUInteger kStreamBufferSize = 32768;
 // Magic value within the options dict used to set a cookie.
 NSString* const kOptionsKeyCookie = @"__cookie";
