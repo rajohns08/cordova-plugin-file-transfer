@@ -25,6 +25,7 @@
 #import <AssetsLibrary/ALAssetRepresentation.h>
 #import <AssetsLibrary/ALAssetsLibrary.h>
 #import <CFNetwork/CFNetwork.h>
+#import <CommonCrypto/CommonCryptor.h>
 
 #ifndef DLog
 #ifdef DEBUG
@@ -43,7 +44,7 @@
 - (void)fileDataForUploadCommand:(CDVInvokedUrlCommand*)command;
 @end
 
-// Buffer size to use for streaming uploads.Testing.
+// Buffer size to use for streaming uploads.
 static const NSUInteger kStreamBufferSize = 32768;
 // Magic value within the options dict used to set a cookie.
 NSString* const kOptionsKeyCookie = @"__cookie";
@@ -625,9 +626,97 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
     }
     if (self.direction == CDV_TRANSFER_DOWNLOAD) {
         if (self.targetFileHandle) {
-            [self.targetFileHandle closeFile];
-            self.targetFileHandle = nil;
-            DLog(@"File Transfer Download success");
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            NSData *data = [NSData dataWithContentsOfURL:self.targetURL];
+            void* bytes_memory = [data bytes];
+            
+            
+            // CREATE RANDOM AES KEY
+            uint8_t key[kCCKeySizeAES256];
+            int status = SecRandomCopyBytes(kSecRandomDefault, kCCKeySizeAES256, &key);
+            if (status == errSecSuccess) {
+                NSLog(@"tagzzz - key creation success");
+            } else {
+                NSLog(@"tagzzz - key creation error");
+            }
+            
+            
+            
+            
+            
+            // ENCRYPT DATA WITH AES KEY
+            NSLog(@"tagzzz - dataToEncrypt: %@", [data description]);
+            
+            NSUInteger dataLength = [data length];
+                
+            size_t bufferSize = dataLength + kCCBlockSizeAES128;
+            void *buffer = malloc(bufferSize);
+            size_t numBytesEncrypted = 0;
+            
+            
+            
+            CCCryptorStatus cryptStatus = CCCrypt(kCCEncrypt, kCCAlgorithmAES128,
+                                                  kCCOptionPKCS7Padding, key,
+                                                  kCCKeySizeAES256, NULL, [data bytes],
+                                                  dataLength, buffer, bufferSize, &numBytesEncrypted);
+            NSData* encryptedData;
+            if (cryptStatus == kCCSuccess) {
+                encryptedData = [NSData dataWithBytesNoCopy:buffer length:numBytesEncrypted];
+                NSLog(@"tagzzz - encryptedData: %@", [encryptedData description]);
+            } else {
+                NSLog(@"tagzzz - failure encrypting");
+            }
+            
+
+            
+            
+            
+            
+            // DECRYPT DATA WITH AES KEY
+            size_t dbuffsize = [encryptedData length] + kCCBlockSizeAES128;
+            void *dbuffer = malloc(dbuffsize);
+            size_t numBytesDecrypted = 0;
+            
+            
+            
+            CCCryptorStatus decryptStatus = CCCrypt(kCCDecrypt, kCCAlgorithmAES128,
+                                                    kCCOptionPKCS7Padding, key,
+                                                    kCCKeySizeAES256, NULL, [encryptedData bytes],
+                                                    [encryptedData length], dbuffer, dbuffsize, &numBytesDecrypted);
+            if (decryptStatus == kCCSuccess) {
+                NSData *decryptedData = [NSData dataWithBytesNoCopy:dbuffer length:numBytesDecrypted];
+                NSLog(@"tagzzz - decryptedData: %@", [decryptedData description]);
+                if ([decryptedData isEqualToData:data]) {
+                    NSLog(@"tagzzz - they are equal");
+                } else {
+                    NSLog(@"tagzzz - well, shit");
+                }
+            } else {
+                NSLog(@"tagzzz - decrypt failure");
+            }
+            
+            
+            
+            
+            
+            
+            
+            
+            
+                [self.targetFileHandle closeFile];
+                self.targetFileHandle = nil;
+                DLog(@"File Transfer Download success");
+            
 
             result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[self.filePlugin makeEntryForURL:self.targetURL]];
         } else {
