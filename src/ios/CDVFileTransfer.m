@@ -652,6 +652,10 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
             
             
             
+        
+            [[NSFileManager defaultManager] createFileAtPath:self.targetFilePath contents:[NSData data] attributes:nil];
+            self.targetFileHandle = [NSFileHandle fileHandleForWritingAtPath:self.targetFilePath];
+            
             
             
             // ENCRYPT DATA WITH AES KEY
@@ -677,13 +681,19 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
                 NSLog(@"tagzzz - failure encrypting");
             }
             
+            
+            [self.targetFileHandle writeData:encryptedData];
+            
 
             
             
             
             
+            NSData *encData = [NSData dataWithContentsOfURL:self.targetURL];
+            
+            
             // DECRYPT DATA WITH AES KEY
-            size_t dbuffsize = [encryptedData length] + kCCBlockSizeAES128;
+            size_t dbuffsize = [encData length] + kCCBlockSizeAES128;
             void *dbuffer = malloc(dbuffsize);
             size_t numBytesDecrypted = 0;
             
@@ -691,10 +701,11 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
             
             CCCryptorStatus decryptStatus = CCCrypt(kCCDecrypt, kCCAlgorithmAES128,
                                                     kCCOptionPKCS7Padding, key,
-                                                    kCCKeySizeAES256, NULL, [encryptedData bytes],
-                                                    [encryptedData length], dbuffer, dbuffsize, &numBytesDecrypted);
+                                                    kCCKeySizeAES256, NULL, [encData bytes],
+                                                    [encData length], dbuffer, dbuffsize, &numBytesDecrypted);
+            NSData *decryptedData;
             if (decryptStatus == kCCSuccess) {
-                NSData *decryptedData = [NSData dataWithBytesNoCopy:dbuffer length:numBytesDecrypted];
+                decryptedData = [NSData dataWithBytesNoCopy:dbuffer length:numBytesDecrypted];
                 NSLog(@"tagzzz - decryptedData: %@", [decryptedData description]);
                 if ([decryptedData isEqualToData:data]) {
                     NSLog(@"tagzzz - they are equal");
@@ -704,6 +715,12 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
             } else {
                 NSLog(@"tagzzz - decrypt failure");
             }
+            
+            
+            [[NSFileManager defaultManager] createFileAtPath:self.targetFilePath contents:[NSData data] attributes:nil];
+            self.targetFileHandle = [NSFileHandle fileHandleForWritingAtPath:self.targetFilePath];
+            
+            [self.targetFileHandle writeData:decryptedData];
             
             
             
