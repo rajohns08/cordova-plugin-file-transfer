@@ -638,17 +638,69 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
             
             
             NSData *data = [NSData dataWithContentsOfURL:self.targetURL];
-            void* bytes_memory = [data bytes];
             
             
-            // CREATE RANDOM AES KEY
-            uint8_t key[kCCKeySizeAES256];
-            int status = SecRandomCopyBytes(kSecRandomDefault, kCCKeySizeAES256, &key);
-            if (status == errSecSuccess) {
-                NSLog(@"tagzzz - key creation success");
+            
+            
+            
+            
+            
+            
+            
+            // CHECK IF KEY ALREADY EXISTS IN KEYCHAIN
+            NSString *keychainKey = @"file_encryption_key";
+            NSString *service = [[NSBundle mainBundle] bundleIdentifier];
+            
+            NSDictionary *query = @{
+                (__bridge id)kSecClass : (__bridge id)kSecClassGenericPassword,
+                (__bridge id)kSecAttrService : service,
+                (__bridge id)kSecAttrAccount : keychainKey,
+                (__bridge id)kSecReturnData : @YES
+            };
+            CFDataRef keyFromKeychainRef = NULL;
+            OSStatus queryStatus = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&keyFromKeychainRef);
+            NSData *keyFromKeychain = (__bridge_transfer NSData *)keyFromKeychainRef;
+            
+            
+            
+            
+            
+            
+            NSData *keyData;
+            if (queryStatus == errSecItemNotFound) {
+                // CREATE RANDOM AES KEY
+                uint8_t key[kCCKeySizeAES256];
+                int status = SecRandomCopyBytes(kSecRandomDefault, kCCKeySizeAES256, &key);
+                if (status == errSecSuccess) {
+                    NSLog(@"tagzzz - success");
+                } else {
+                    NSLog(@"tagzzz - error");
+                }
+                
+                
+                
+                // STORE KEY IN KEYCHAIN
+                keyData = [[NSData alloc] initWithBytes:key length:kCCKeySizeAES256];
+                NSDictionary *secItem = @{
+                    (__bridge id)kSecClass : (__bridge id)kSecClassGenericPassword,
+                    (__bridge id)kSecAttrService : service,
+                    (__bridge id)kSecAttrAccount : keychainKey,
+                    (__bridge id)kSecValueData : keyData,};
+
+                CFTypeRef result = NULL;
+                OSStatus addStatus = SecItemAdd((__bridge CFDictionaryRef)secItem, &result);
+                if (addStatus == errSecSuccess){
+                    NSLog(@"value saved");
+                } else{
+                    NSLog(@"error: %ld", (long)addStatus);
+                }
             } else {
-                NSLog(@"tagzzz - key creation error");
+                keyData = keyFromKeychain;
             }
+            
+            
+            
+            
             
             
             
@@ -670,7 +722,7 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
             
             
             CCCryptorStatus cryptStatus = CCCrypt(kCCEncrypt, kCCAlgorithmAES128,
-                                                  kCCOptionPKCS7Padding, key,
+                                                  kCCOptionPKCS7Padding, [keyData bytes],
                                                   kCCKeySizeAES256, NULL, [data bytes],
                                                   dataLength, buffer, bufferSize, &numBytesEncrypted);
             NSData* encryptedData;
@@ -700,7 +752,7 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
             
             
             CCCryptorStatus decryptStatus = CCCrypt(kCCDecrypt, kCCAlgorithmAES128,
-                                                    kCCOptionPKCS7Padding, key,
+                                                    kCCOptionPKCS7Padding, [keyData bytes],
                                                     kCCKeySizeAES256, NULL, [encData bytes],
                                                     [encData length], dbuffer, dbuffsize, &numBytesDecrypted);
             NSData *decryptedData;
